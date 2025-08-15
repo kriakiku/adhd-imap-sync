@@ -24,4 +24,4 @@ fi
 echo "$now" > /run/fetchmail/last
 
 # Send SIGUSR1 to fetchmail to trigger immediate poll
-kill -USR1 "$(cat "$PIDFILE")"
+kill -USR1 "$(head -n1 "$PIDFILE")"
