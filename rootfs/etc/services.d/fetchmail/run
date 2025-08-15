@@ -7,7 +7,11 @@ umask "${UMASK:-022}"
 mkdir -p /run/fetchmail
 chown abc:abc /run/fetchmail
 
+: "${ADHD_POLL_INTERVAL:=300}";
+
 exec s6-setuidgid abc \
-  fetchmail --nodetach \
+  HOME=/config fetchmail --nodetach \
             --pidfile /run/fetchmail/fetchmail.pid \
+            --idfile /config/.fetchids \
+            --daemon $ADHD_POLL_INTERVAL \
             -f /run/config/fetchmailrc

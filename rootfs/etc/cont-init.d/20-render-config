@@ -68,7 +68,6 @@ mkdir -p /run/config
 chown "$PUID:$PGID" /run/config
 
 # --- Defaults ---
-: "${ADHD_POLL_INTERVAL:=300}"     # fetchmail daemon interval (seconds)
 : "${ADHD_KEEP:=keep}"             # "keep" or "no keep"
 : "${ADHD_IMAP_PORT:=993}"
 : "${ADHD_IMAP_TLS:=true}"         # true/false
@@ -82,8 +81,6 @@ chown "$PUID:$PGID" /run/config
   echo "set logfile /dev/stdout"
   echo "set no bouncemail"
   echo "set no spambounce"
-  echo "set daemon ${ADHD_POLL_INTERVAL}"
-  echo "set idfile \"/config/.fetchids\""
 
   for sfx in $suffixes; do
     # Resolve per-account values with fallback to global
