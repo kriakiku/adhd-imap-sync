@@ -65,13 +65,15 @@ fi
 
 # --- Prepare runtime config dir ---
 mkdir -p /run/config
-chown abc:abc /run/config
+chown "$PUID:$PGID" /run/config
 
 # --- Defaults ---
 : "${ADHD_POLL_INTERVAL:=300}"     # fetchmail daemon interval (seconds)
 : "${ADHD_KEEP:=no keep}"          # "keep" or "no keep"
 : "${ADHD_IMAP_PORT:=993}"
 : "${ADHD_IMAP_TLS:=true}"         # true/false
+: "${PUID:=1000}"
+: "${PGID:=1000}"
 # Delivery uses a single full-URI variable ADHD_DELIVERY_TARGET[_SUF], e.g.:
 # lmtp://127.0.0.1:24, lmtp:/var/run/dovecot/lmtp, smtp://postfix:25
 
@@ -119,7 +121,7 @@ chown abc:abc /run/config
 } > /run/config/fetchmailrc
 
 chmod 600 /run/config/fetchmailrc || true
-chown abc:abc /run/config/fetchmailrc || true
+chown "$PUID:$PGID" /run/config/fetchmailrc || true
 
 # --- Build goimapnotify.yml ---
 {
@@ -150,4 +152,4 @@ EOF
   done
 } > /run/config/goimapnotify.yml
 
-chown abc:abc /run/config/goimapnotify.yml || true
+chown "$PUID:$PGID" /run/config/goimapnotify.yml || true
