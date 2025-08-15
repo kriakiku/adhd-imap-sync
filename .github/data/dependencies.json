@@ -1,6 +1,6 @@
 {
   "project": {
-    "version": "next"
+    "version": "1.0.0"
   },
   "goimapnotify": {
     "version": "2.5.3"
