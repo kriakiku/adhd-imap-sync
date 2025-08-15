@@ -1,0 +1,55 @@
+name: Release on dependencies.json change
+
+permissions:
+  contents: write
+  packages: write
+
+on:
+  push:
+    branches:
+      - main
+      - next
+    paths:
+      - .github/data/dependencies.json
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract build variables
+        id: get_vars
+        run: |
+          VERSION=$(jq -r '.project.version' .github/data/dependencies.json)
+          GOIMAPNOTIFY_VERSION=$(jq -r '.goimapnotify.version' .github/data/dependencies.json)
+          FETCHMAIL_URL=$(jq -r '.fetchmail.download' .github/data/dependencies.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "goimapnotify_ref=$GOIMAPNOTIFY_VERSION" >> $GITHUB_OUTPUT
+          echo "fetchmail_url=$FETCHMAIL_URL" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image (linux/amd64, linux/arm64)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ steps.get_vars.outputs.version }}
+            ${{ github.ref_name == 'main' && format('ghcr.io/{0}:latest', github.repository) || '' }}
+          build-args: |
+            GOIMAPNOTIFY_REF=${{ steps.get_vars.outputs.goimapnotify_ref }}
+            FETCHMAIL_URL=${{ steps.get_vars.outputs.fetchmail_url }}

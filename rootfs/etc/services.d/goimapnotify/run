@@ -1,0 +1,8 @@
+#!/usr/bin/with-contenv sh
+set -e
+umask "${UMASK:-022}"
+
+[ -f /run/config/goimapnotify.yml ] || { echo "missing /run/config/goimapnotify.yml"; exit 1; }
+
+exec s6-setuidgid abc \
+  /usr/local/bin/goimapnotify -conf /run/config/goimapnotify.yml

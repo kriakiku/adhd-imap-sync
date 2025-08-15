@@ -1,0 +1,92 @@
+
+name: Auto Update Dependencies
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: |
+          cd .github/scripts
+          bun install
+          cd ../..
+
+      - name: Update versions (main)
+        run: |
+          bun run .github/scripts/update_versions.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit, push and tag if updated (main)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/data/dependencies.json README.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: update dependencies and versions [auto]"
+          git push
+          VERSION=$(jq -r '.project.version' .github/data/dependencies.json)
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-next:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout next
+        uses: actions/checkout@v4
+        with:
+          ref: next
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: |
+          cd .github/scripts
+          bun install
+          cd ../..
+
+      - name: Update versions (next)
+        run: |
+          bun run .github/scripts/update_versions.ts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit and push updated dependencies.json and README.md (next)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/data/dependencies.json README.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: update dependencies and versions [auto]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

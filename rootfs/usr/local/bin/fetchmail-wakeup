@@ -1,0 +1,27 @@
+#!/usr/bin/with-contenv sh
+set -e
+
+PIDFILE="/run/fetchmail/fetchmail.pid"
+LOCK="/run/fetchmail/wakeup.lock"
+MIN_GAP="${ADHD_WAKEUP_GAP:-3}"  # minimum gap between wake-ups in seconds
+
+# PID file must exist and be readable
+[ -r "$PIDFILE" ] || exit 0
+mkdir -p /run/fetchmail
+
+# Acquire non-blocking lock to prevent multiple wakeups running at the same time
+exec 9>"$LOCK" || exit 0
+if ! flock -n 9; then
+    exit 0
+fi
+
+# Check last wakeup time to avoid spamming signals
+now=$(date +%s)
+last=$(cat /run/fetchmail/last 2>/dev/null || echo 0)
+if [ $((now-last)) -lt "$MIN_GAP" ]; then
+    exit 0
+fi
+echo "$now" > /run/fetchmail/last
+
+# Send SIGUSR1 to fetchmail to trigger immediate poll
+kill -USR1 "$(cat "$PIDFILE")"

@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv sh
+set -e
+umask "${UMASK:-022}"
+
+[ -f /run/config/fetchmailrc ] || { echo "missing /run/config/fetchmailrc"; exit 1; }
+
+mkdir -p /run/fetchmail
+chown abc:abc /run/fetchmail
+
+exec s6-setuidgid abc \
+  fetchmail --nodetach \
+            --pidfile /run/fetchmail/fetchmail.pid \
+            -f /run/config/fetchmailrc

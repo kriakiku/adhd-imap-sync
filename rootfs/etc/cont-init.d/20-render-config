@@ -1,0 +1,169 @@
+#!/usr/bin/with-contenv sh
+set -e
+
+# --- Helper: read var with optional suffix and fallback to global ---
+# getv NAME [SUFFIX]
+# Example: getv IMAP_HOST MEOW -> ${ADHD_IMAP_HOST_MEOW:-$ADHD_IMAP_HOST}
+getv() {
+  _name="$1"
+  _sfx="$2"
+  if [ -n "$_sfx" ]; then
+    eval "printf '%s' \"\${ADHD_${_name}_$_sfx-}\""
+    if [ -n "$(eval "printf '%s' \"\${ADHD_${_name}_$_sfx-}\"")" ]; then
+      return 0
+    fi
+  fi
+  eval "printf '%s' \"\${ADHD_${_name}-}\""
+}
+
+# --- Helper: read secret from file or fallback to env (no trailing newlines) ---
+# Priority: ADHD_<NAME>_FILE_<SUF> -> ADHD_<NAME>_FILE -> ADHD_<NAME>[_<SUF>]
+# The file content is read as-is, CR removed, all newlines collapsed.
+get_secret() {
+  _name="$1"
+  _sfx="$2"
+  # Try suffixed file first
+  if [ -n "$_sfx" ]; then
+    eval "_file=\"\${ADHD_${_name}_FILE_$_sfx-}\""
+    if [ -n "$_file" ] && [ -r "$_file" ]; then
+      awk 'BEGIN{ORS=""}{gsub("\r",""); print}' "$_file"
+      return 0
+    fi
+  fi
+  # Then global file
+  eval "_file=\"\${ADHD_${_name}_FILE-}\""
+  if [ -n "$_file" ] && [ -r "$_file" ]; then
+    awk 'BEGIN{ORS=""}{gsub("\r",""); print}' "$_file"
+    return 0
+  fi
+  # Fallback to env (uses getv)
+  getv "$_name" "$_sfx"
+}
+
+# --- Helper: derive account name from suffix ---
+# Default account -> "default"
+# Non-empty suffix -> lowercase full suffix
+derive_account_name() {
+  _sfx="$1"
+  if [ -n "$_sfx" ]; then
+    printf '%s' "$_sfx" | tr 'A-Z' 'a-z'
+  else
+    printf 'default'
+  fi
+}
+
+# --- Discover account suffixes ---
+# Default account: no suffix if ADHD_IMAP_USER is present.
+# Additional accounts: any env var ADHD_IMAP_USER_<SUF>.
+suffixes=""
+
+if [ -n "${ADHD_IMAP_USER-}" ]; then
+  suffixes="${suffixes} "     # empty suffix => default account
+fi
+
+# Collect dynamic suffixes from environment
+# shellcheck disable=SC2046
+for envvar in $(env | awk -F= '/^ADHD_IMAP_USER_[A-Z0-9_]+=/ {print $1}'); do
+  sfx="${envvar#ADHD_IMAP_USER_}"
+  # de-duplicate
+  echo " $suffixes " | grep -q " ${sfx} " || suffixes="${suffixes}${sfx} "
+done
+
+# Fail early if no accounts defined
+if [ -z "${suffixes# }" ]; then
+  echo "ERROR: No accounts defined. Set ADHD_IMAP_USER (default) or ADHD_IMAP_USER_<SUF>." >&2
+  exit 1
+fi
+
+# --- Prepare runtime config dir ---
+mkdir -p /run/config
+chown abc:abc /run/config
+
+# --- Defaults ---
+: "${ADHD_POLL_INTERVAL:=300}"     # fetchmail daemon interval (seconds)
+: "${ADHD_KEEP:=no keep}"          # "keep" or "no keep"
+: "${ADHD_IMAP_PORT:=993}"
+: "${ADHD_IMAP_TLS:=true}"         # true/false
+# Delivery uses a single full-URI variable ADHD_DELIVERY_TARGET[_SUF], e.g.:
+# lmtp://127.0.0.1:24, lmtp:/var/run/dovecot/lmtp, smtp://postfix:25
+
+# --- Build fetchmailrc ---
+{
+  echo "set logfile /dev/stdout"
+  echo "set no bouncemail"
+  echo "set no spambounce"
+  echo "set daemon ${ADHD_POLL_INTERVAL}"
+  echo "set idfile \"/config/.fetchids\""
+
+  for sfx in $suffixes; do
+    # Resolve per-account values with fallback to global
+    host="$(getv IMAP_HOST "$sfx")"
+    user="$(getv IMAP_USER "$sfx")"
+    pass="$(get_secret IMAP_PASS "$sfx")"   # <-- password via *_FILE or env
+    port="$(getv IMAP_PORT "$sfx")"; port="${port:-$ADHD_IMAP_PORT}"
+    tls="$(getv IMAP_TLS "$sfx")";  tls="${tls:-$ADHD_IMAP_TLS}"
+    keep="$(getv KEEP "$sfx")";     keep="${keep:-$ADHD_KEEP}"
+
+    # Delivery target: can be LMTP, SMTP, etc. Full URI required.
+    delivery_target="$(getv DELIVERY_TARGET "$sfx")"
+    delivery_target="${delivery_target:-$ADHD_DELIVERY_TARGET}"
+    if [ -z "$delivery_target" ]; then
+      echo "ERROR: Missing ADHD_DELIVERY_TARGET for suffix '${sfx:-default}'" >&2
+      exit 1
+    fi
+
+    if [ -z "$host" ] || [ -z "$user" ] || [ -z "$pass" ]; then
+      echo "ERROR: Missing IMAP_HOST/IMAP_USER/IMAP_PASS for suffix '${sfx:-default}'" >&2
+      exit 1
+    fi
+
+    echo
+    echo "poll ${host} protocol IMAP port ${port}"
+    echo "    user \"${user}\" with password \"${pass}\""
+    if [ "${tls}" = "false" ] || [ "${tls}" = "no" ]; then
+      echo "    no ssl"
+    else
+      echo "    ssl"
+    fi
+    echo "    mda \"${delivery_target}\""
+    echo "    ${keep}"
+  done
+} > /run/config/fetchmailrc
+
+chmod 600 /run/config/fetchmailrc || true
+chown abc:abc /run/config/fetchmailrc || true
+
+# --- Build goimapnotify.yml ---
+{
+  echo "configurations:"
+  for sfx in $suffixes; do
+    host="$(getv IMAP_HOST "$sfx")"
+    user="$(getv IMAP_USER "$sfx")"
+    pass="$(get_secret IMAP_PASS "$sfx")"   # <-- same secret lookup for GIN
+    port="$(getv IMAP_PORT "$sfx")"; port="${port:-$ADHD_IMAP_PORT}"
+    tls="$(getv IMAP_TLS "$sfx")";  tls="${tls:-$ADHD_IMAP_TLS}"
+
+    # Account name derived purely from suffix ("default" if no suffix)
+    acc_name="$(derive_account_name "$sfx")"
+
+
+    if [ -z "$host" ] || [ -z "$user" ] || [ -z "$pass" ]; then
+      echo "ERROR: Missing IMAP_HOST/IMAP_USER/IMAP_PASS for suffix '${sfx:-default}'" >&2
+      exit 1
+    fi
+
+    cat <<EOF
+  - 
+    host: ${host}
+    port: ${port}
+    tls: ${tls:-true}
+
+    username: ${user}
+    password: "${pass}"
+
+    onNewMail: "fetchmail-wakeup"
+EOF
+  done
+} > /run/config/goimapnotify.yml
+
+chown abc:abc /run/config/goimapnotify.yml || true
