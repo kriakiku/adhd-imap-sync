@@ -69,7 +69,7 @@ chown "$PUID:$PGID" /run/config
 
 # --- Defaults ---
 : "${ADHD_POLL_INTERVAL:=300}"     # fetchmail daemon interval (seconds)
-: "${ADHD_KEEP:=no keep}"          # "keep" or "no keep"
+: "${ADHD_KEEP:=keep}"             # "keep" or "no keep"
 : "${ADHD_IMAP_PORT:=993}"
 : "${ADHD_IMAP_TLS:=true}"         # true/false
 : "${PUID:=1000}"
