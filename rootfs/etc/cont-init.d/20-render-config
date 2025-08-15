@@ -7,7 +7,7 @@ set -e
 getv() {
   _name="$1"
   _sfx="$2"
-  if [ -n "$_sfx" ]; then
+  if [ -n "$_sfx" ] && [ "$_sfx" != "default" ]; then
     eval "printf '%s' \"\${ADHD_${_name}_$_sfx-}\""
     if [ -n "$(eval "printf '%s' \"\${ADHD_${_name}_$_sfx-}\"")" ]; then
       return 0
@@ -23,7 +23,7 @@ get_secret() {
   _name="$1"
   _sfx="$2"
   # Try suffixed file first
-  if [ -n "$_sfx" ]; then
+  if [ -n "$_sfx" ] && [ "$_sfx" != "default" ]; then
     eval "_file=\"\${ADHD_${_name}_FILE_$_sfx-}\""
     if [ -n "$_file" ] && [ -r "$_file" ]; then
       awk 'BEGIN{ORS=""}{gsub("\r",""); print}' "$_file"
@@ -40,25 +40,13 @@ get_secret() {
   getv "$_name" "$_sfx"
 }
 
-# --- Helper: derive account name from suffix ---
-# Default account -> "default"
-# Non-empty suffix -> lowercase full suffix
-derive_account_name() {
-  _sfx="$1"
-  if [ -n "$_sfx" ]; then
-    printf '%s' "$_sfx" | tr 'A-Z' 'a-z'
-  else
-    printf 'default'
-  fi
-}
-
 # --- Discover account suffixes ---
 # Default account: no suffix if ADHD_IMAP_USER is present.
 # Additional accounts: any env var ADHD_IMAP_USER_<SUF>.
 suffixes=""
 
 if [ -n "${ADHD_IMAP_USER-}" ]; then
-  suffixes="${suffixes} "     # empty suffix => default account
+  suffixes="${suffixes} default"     # empty suffix => default account
 fi
 
 # Collect dynamic suffixes from environment
@@ -142,10 +130,6 @@ chown abc:abc /run/config/fetchmailrc || true
     pass="$(get_secret IMAP_PASS "$sfx")"   # <-- same secret lookup for GIN
     port="$(getv IMAP_PORT "$sfx")"; port="${port:-$ADHD_IMAP_PORT}"
     tls="$(getv IMAP_TLS "$sfx")";  tls="${tls:-$ADHD_IMAP_TLS}"
-
-    # Account name derived purely from suffix ("default" if no suffix)
-    acc_name="$(derive_account_name "$sfx")"
-
 
     if [ -z "$host" ] || [ -z "$user" ] || [ -z "$pass" ]; then
       echo "ERROR: Missing IMAP_HOST/IMAP_USER/IMAP_PASS for suffix '${sfx:-default}'" >&2
