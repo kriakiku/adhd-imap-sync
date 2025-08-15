@@ -44,15 +44,21 @@ services:
 
       # Default settings
       ADHD_IMAP_HOST: "imap.example.com"
-      ADHD_DELIVERY_TARGET: "smtp://dovecot:25"
+      ADHD_DELIVERY_TARGET: |
+        mda "/usr/bin/maildrop -d %T"
 
       # Default account (no suffix)
       ADHD_IMAP_USER: "user@example.com"
       ADHD_IMAP_PASS: "SECRET1"
       
       # Extra account with "WORK" suffix 
-      ADHD_IMAP_USER_WORK: "meow@example.com"
+      ADHD_IMAP_USER_WORK: "work@example.com"
       ADHD_IMAP_PASS_FILE_WORK: "/run/secrets/imap_work_pass"
+      ADHD_DELIVERY_TARGET_WORK: |
+        lmtp
+        smtpname "work@target.com"
+        smtphost /var/run/dovecot/lmtp
+        # smtphost dovecot/24
 secrets:
   imap_work_pass:
     file: ./imap_work_pass.txt
@@ -71,7 +77,7 @@ secrets:
 | `ADHD_IMAP_USER` | *(none)* | IMAP username | `user@example.com` |
 | `ADHD_IMAP_PASS` | *(none)* | IMAP password (or use `_FILE`) | `secret` |
 | `ADHD_IMAP_PASS_FILE` | *(none)* | Path to file containing IMAP password | `/run/secrets/imap_work_pass` |
-| `ADHD_DELIVERY_TARGET` | *(none)* | Full URI for message delivery (LMTP/SMTP/custom) | `lmtp://127.0.0.1:24` |
+| `ADHD_DELIVERY_TARGET` | *(none)* | Fetch mail config part (LMTP/SMTP/MDA) | `lmtp://127.0.0.1:24` |
 | `ADHD_POLL_INTERVAL` | `300` | Fetchmail polling interval in seconds | `60` |
 | `ADHD_WAKE_MIN` | `3` | Minimum delay in seconds between wake-up signals | `5` |
 | `ADHD_KEEP` | `keep` | Whether to leave messages on the server (`keep` or `no keep`) | `no keep` |
@@ -95,13 +101,11 @@ If a variable is not set for a suffix, it will fall back to the **default accoun
 ADHD_IMAP_HOST=imap.example.com
 ADHD_IMAP_USER=user@example.com
 ADHD_IMAP_PASS=secret
-ADHD_DELIVERY_TARGET=lmtp://127.0.0.1:24
 
 # Work account
 ADHD_IMAP_HOST_WORK=imap.work.com
 ADHD_IMAP_USER_WORK=me@work.com
 ADHD_IMAP_PASS_FILE_WORK=/run/secrets/imap_work_pass
-ADHD_DELIVERY_TARGET_WORK=smtp://mail.local:25
 ```
 
 ---

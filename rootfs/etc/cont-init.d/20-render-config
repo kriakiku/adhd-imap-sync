@@ -94,7 +94,7 @@ chown "$PUID:$PGID" /run/config
     tls="$(getv IMAP_TLS "$sfx")";  tls="${tls:-$ADHD_IMAP_TLS}"
     keep="$(getv KEEP "$sfx")";     keep="${keep:-$ADHD_KEEP}"
 
-    # Delivery target: can be LMTP, SMTP, etc. Full URI required.
+    # Delivery target: can be LMTP, SMTP, MDA etc.
     delivery_target="$(getv DELIVERY_TARGET "$sfx")"
     delivery_target="${delivery_target:-$ADHD_DELIVERY_TARGET}"
     if [ -z "$delivery_target" ]; then
@@ -115,7 +115,11 @@ chown "$PUID:$PGID" /run/config
     else
       echo "    ssl"
     fi
-    echo "    mda \"${delivery_target}\""
+    if [ -n "$delivery_target" ]; then
+      echo "$delivery_target" | while IFS= read -r line; do
+        echo "    ${line# }"
+      done
+    fi
     echo "    ${keep}"
   done
 } > /run/config/fetchmailrc
