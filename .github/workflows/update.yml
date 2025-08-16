@@ -1,4 +1,4 @@
-name: Update Dependencies
+name: 🔄 Update Dependencies
 
 permissions:
   contents: write
@@ -55,7 +55,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/github-script@v7
+      - name: Trigger Release Workflow (main)
+        uses: actions/github-script@v7
         if: steps.commit_and_push_main.outputs.release_needed == 'true'
         with:
           script: |
@@ -108,7 +109,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/github-script@v7
+      - name: Trigger Release Workflow (main)
+        uses: actions/github-script@v7
         if: steps.commit_and_push_next.outputs.release_needed == 'true'
         with:
           script: |
