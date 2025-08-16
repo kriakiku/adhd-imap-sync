@@ -1,7 +1,7 @@
 # 📬⚡ ADHD IMAP Sync
 
 <!-- VERSIONS -->
-![Project](https://img.shields.io/badge/Project-v0.1.1-blue) ![GoIMAPNotify](https://img.shields.io/badge/GoIMAPNotify-v2.5.3-green) ![FetchMail](https://img.shields.io/badge/FetchMail-v6.5.4-green)
+![Project](https://img.shields.io/badge/Project-v1.0.0-blue) ![GoIMAPNotify](https://img.shields.io/badge/GoIMAPNotify-v2.5.3-green) ![FetchMail](https://img.shields.io/badge/FetchMail-v6.5.4-green)
 <!-- /VERSIONS -->
 
 **ADHD IMAP Sync** is a lightweight Alpine-based container that combines [goimapnotify](https://github.com/shackra/goimapnotify) and [fetchmail](https://www.fetchmail.info/) to instantly process incoming mail and deliver it to your local MDA (LMTP/SMTP, etc.).
