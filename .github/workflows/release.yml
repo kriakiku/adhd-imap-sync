@@ -1,4 +1,4 @@
-name: Release on dependencies.json change
+name: Release
 
 permissions:
   contents: write

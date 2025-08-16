@@ -1,8 +1,8 @@
-
-name: Auto Update Dependencies
+name: Update Dependencies
 
 permissions:
   contents: write
+  workflows: write
 
 on:
   schedule:
@@ -36,12 +36,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit, push and tag if updated (main)
+        id: commit_and_push_main
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .github/data/dependencies.json README.md
           if git diff --cached --quiet; then
             echo "No changes to commit."
+            echo "release_needed=false" >> $GITHUB_OUTPUT
             exit 0
           fi
           git commit -m "chore: update dependencies and versions [auto]"
@@ -49,8 +51,20 @@ jobs:
           VERSION=$(jq -r '.project.version' .github/data/dependencies.json)
           git tag "v$VERSION"
           git push origin "v$VERSION"
+          echo "release_needed=true" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/github-script@v7
+        if: steps.commit_and_push_main.outputs.release_needed == 'true'
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              workflow_id: "release.yml",
+              ref: "main"
+            })
 
   update-next:
     runs-on: ubuntu-latest
@@ -78,15 +92,29 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit and push updated dependencies.json and README.md (next)
+        id: commit_and_push_next
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .github/data/dependencies.json README.md
           if git diff --cached --quiet; then
             echo "No changes to commit."
+            echo "release_needed=false" >> $GITHUB_OUTPUT
             exit 0
           fi
           git commit -m "chore: update dependencies and versions [auto]"
           git push
+          echo "release_needed=true" >> $GITHUB_OUTPUT
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/github-script@v7
+        if: steps.commit_and_push_next.outputs.release_needed == 'true'
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              workflow_id: "release-next.yml",
+              ref: "next"
+            })
