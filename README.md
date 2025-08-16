@@ -77,7 +77,7 @@ secrets:
 | `ADHD_IMAP_USER` | *(none)* | IMAP username | `user@example.com` |
 | `ADHD_IMAP_PASS` | *(none)* | IMAP password (or use `_FILE`) | `secret` |
 | `ADHD_IMAP_PASS_FILE` | *(none)* | Path to file containing IMAP password | `/run/secrets/imap_work_pass` |
-| `ADHD_DELIVERY_TARGET` | *(none)* | Fetch mail config part (LMTP/SMTP/MDA) | `lmtp://127.0.0.1:24` |
+| `ADHD_DELIVERY_TARGET` | *(none)* | Fetch mail config part (LMTP/SMTP/MDA) | `mda "/usr/bin/maildrop -d %T"`  |
 | `ADHD_POLL_INTERVAL` | `300` | Fetchmail polling interval in seconds | `60` |
 | `ADHD_WAKE_MIN` | `3` | Minimum delay in seconds between wake-up signals | `5` |
 | `ADHD_KEEP` | `keep` | Whether to leave messages on the server (`keep` or `no keep`) | `no keep` |
