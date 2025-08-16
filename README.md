@@ -1,7 +1,7 @@
 # 📬⚡ ADHD IMAP Sync
 
 <!-- VERSIONS -->
-![Project](https://img.shields.io/badge/Project-v0.1.1-blue) ![GoIMAPNotify](https://img.shields.io/badge/GoIMAPNotify-v2.5.3-green) ![FetchMail](https://img.shields.io/badge/FetchMail-v6.5.4-green)
+![Project](https://img.shields.io/badge/Project-v1.0.0-blue) ![GoIMAPNotify](https://img.shields.io/badge/GoIMAPNotify-v2.5.3-green) ![FetchMail](https://img.shields.io/badge/FetchMail-v6.5.4-green)
 <!-- /VERSIONS -->
 
 **ADHD IMAP Sync** is a lightweight Alpine-based container that combines [goimapnotify](https://github.com/shackra/goimapnotify) and [fetchmail](https://www.fetchmail.info/) to instantly process incoming mail and deliver it to your local MDA (LMTP/SMTP, etc.).
@@ -108,6 +108,7 @@ ADHD_IMAP_USER_WORK=me@work.com
 ADHD_IMAP_PASS_FILE_WORK=/run/secrets/imap_work_pass
 ```
 
+
 ---
 
 ## 📦 How It Works
@@ -115,6 +116,21 @@ ADHD_IMAP_PASS_FILE_WORK=/run/secrets/imap_work_pass
 1. goimapnotify connects to IMAP and listens for new mail using IDLE.
 2. When a new message arrives, it calls /usr/local/bin/fetchmail-wakeup.
 3. fetchmail retrieves messages and delivers them to the configured ADHD_DELIVERY_TARGET.
+
+
+---
+
+## 💡 Motivation  
+
+I run a self-hosted mail server (**Stalwart**) on my home server. But home servers aren’t exactly the most stable environment — in the last 3 years I had to move 5 times (thanks to one deranged dictator), and sometimes there are internet outages.
+
+To keep my email reliable, I use **MXroute** for both sending and receiving. Stalwart lets me use external SMTP servers to send mail, but I couldn’t find a way to **pull mail from external inboxes** (would be hilarious if it actually exists 😅).  
+
+So, I turned to **Fetchmail** — but here’s the catch: it doesn’t support **IMAP IDLE** (push notifications for new mail). Instead, it just polls every few minutes. Not good enough — I want my OTP codes instantly ⚡📲.  
+
+That’s when I found **GoIMAPNotify**, which *does* support IMAP IDLE and can trigger commands when new mail arrives. Perfect match! So I built a **Docker image** that automatically generates configs for both tools and makes them work together.  
+
+Maybe someone else finds this handy too. 🙂  
 
 
 ---
