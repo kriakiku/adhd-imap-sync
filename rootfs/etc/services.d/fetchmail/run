@@ -2,6 +2,8 @@
 set -e
 umask "${UMASK:-022}"
 
+export HOME="/config"
+
 [ -f /run/config/fetchmailrc ] || { echo "missing /run/config/fetchmailrc"; exit 1; }
 
 mkdir -p /run/fetchmail
