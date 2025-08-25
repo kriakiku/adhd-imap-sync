@@ -1,0 +1,14 @@
+#!/usr/bin/with-contenv sh
+set -e
+
+if [ ! -f /root/.netrc ]; then
+    if [ -f /config/.netrc ]; then
+        echo "Creating symlink: /root/.netrc -> /config/.netrc"
+        ln -s /config/.netrc /root/.netrc
+    else
+        echo "No /config/.netrc found. Creating empty /root/.netrc"
+        touch /root/.netrc
+    fi
+else
+    echo "/root/.netrc already exists. Nothing to do."
+fi

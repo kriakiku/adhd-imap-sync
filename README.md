@@ -111,6 +111,29 @@ ADHD_IMAP_PASS_FILE_WORK=/run/secrets/imap_work_pass
 
 ---
 
+## 📂 Configuration Files
+
+
+Fetchmail stores the identifiers of processed messages in the file `/config/.fetchids` (used via the `--idfile /config/.fetchids` option).  
+This file ensures that already retrieved emails are not processed again after container restarts.  
+You can mount a persistent volume to `/config` to preserve this state:
+
+```yaml
+volumes:
+  - ./data:/config
+```
+
+You can provide a `.netrc` file for authentication either by placing it directly at `/root/.netrc` inside the container, **or** by mounting it as `/config/.netrc`.  
+If `/root/.netrc` does not exist, the container will automatically create a symlink to `/config/.netrc` (if present), or create an empty file if neither exists.
+
+```yaml
+volumes:
+  - /root/.netrc:/root/.netrc:ro
+```
+
+
+---
+
 ## 📦 How It Works
 
 1. goimapnotify connects to IMAP and listens for new mail using IDLE.
