@@ -123,14 +123,7 @@ volumes:
   - ./data:/config
 ```
 
-You can provide a `.netrc` file for authentication either by placing it directly at `/root/.netrc` inside the container, **or** by mounting it as `/config/.netrc`.  
-If `/root/.netrc` does not exist, the container will automatically create a symlink to `/config/.netrc` (if present), or create an empty file if neither exists.
-
-```yaml
-volumes:
-  - /root/.netrc:/root/.netrc:ro
-```
-
+You can provide a `.netrc` file for authentication either by mounting it as `/config/.netrc`.  
 
 ---
 

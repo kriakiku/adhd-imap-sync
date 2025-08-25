@@ -1,20 +1,10 @@
 #!/usr/bin/with-contenv sh
 set -e
 
-: "${PUID:=1000}"
-: "${PGID:=1000}"
-
-if [ ! -f /root/.netrc ]; then
-    if [ -f /config/.netrc ]; then
-        echo "Creating symlink: /root/.netrc -> /config/.netrc"
-        ln -s /config/.netrc /root/.netrc
-    else
-        echo "No /config/.netrc found. Creating empty /root/.netrc"
-        touch /root/.netrc
-    fi
-
-    chmod 644 /root/.netrc || true
-    chown "$PUID:$PGID" /root/.netrc || true
-else
-    echo "/root/.netrc already exists. Nothing to do."
+if [ ! -f /config/.netrc ]; then
+    echo "No /config/.netrc found. Creating empty."
+    touch /config/.netrc
 fi
+
+chmod 600 /config/.netrc || true
+chown "abc:abc" /config/.netrc || true

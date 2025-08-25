@@ -10,6 +10,7 @@ chown abc:abc /run/fetchmail
 : "${ADHD_POLL_INTERVAL:=300}";
 
 exec s6-setuidgid abc \
+  env HOME="/config" \
   fetchmail --nodetach \
             --pidfile /run/fetchmail/fetchmail.pid \
             --idfile /config/.fetchids \
