@@ -79,29 +79,29 @@ export function getLatestAbove(versions: string[], latestPatchVersion: string) {
 }
 
 /** Dependencies */ {
-    if (!needToRelease) {
-        console.log('No updates found, exiting.')
-        process.exit(0)
-    }
+    if (needToRelease) {
+        // Update project version
+        if (RELEASE_CHANNEL === 'next') {
+            dependencies.project.version = 'next'
+        } else {
+            const currentVersion = semver.clean(dependencies.project.version) || '0.0.0'
+            dependencies.project.version = semver.inc(currentVersion, 'patch') || currentVersion
+        }
 
-    // Update project version
-    if (RELEASE_CHANNEL === 'next') {
-        dependencies.project.version = 'next'
-    } else {
-        const currentVersion = semver.clean(dependencies.project.version) || '0.0.0'
-        dependencies.project.version = semver.inc(currentVersion, 'patch') || currentVersion
+        writeFileSync(DEPENDENCIES_PATH, JSON.stringify(dependencies, null, 2).trim() + "\n")
+        console.log('Updated dependencies.json')
     }
-
-    writeFileSync(DEPENDENCIES_PATH, JSON.stringify(dependencies, null, 2).trim() + "\n")
-    console.log('Updated dependencies.json')
 }
 
 /** Readme */ {
-    let content = readFileSync(README_PATH, 'utf-8')
+    const origContent = readFileSync(README_PATH, 'utf-8')
+    let content = origContent
     const versionsBlock = `<!-- VERSIONS -->\n![Project](https://img.shields.io/badge/Project-v${dependencies.project.version}-blue) ![GoIMAPNotify](https://img.shields.io/badge/GoIMAPNotify-v${dependencies.goimapnotify.version}-green) ![FetchMail](https://img.shields.io/badge/FetchMail-v${dependencies.fetchmail.version}-green)\n<!-- /VERSIONS -->`
     content = content.replace(/<!-- VERSIONS -->([\s\S]*?)<!-- \/VERSIONS -->/g, versionsBlock)
-    writeFileSync(README_PATH, content)
-    console.log('Updated README.md')
+    if (content !== origContent) {
+        writeFileSync(README_PATH, content)
+        console.log('Updated README.md')
+    }
 }
 
 interface FetchMailRelease {
