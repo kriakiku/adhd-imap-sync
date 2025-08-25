@@ -1,6 +1,8 @@
 #!/usr/bin/with-contenv sh
 set -e
-: "${PUID:=1000}"; : "${PGID:=1000}"
+
+: "${PUID:=1000}";
+: "${PGID:=1000}";
 
 getent group abc >/dev/null 2>&1 || addgroup -g "$PGID" abc
 id -u abc >/dev/null 2>&1 || adduser -D -H -u "$PUID" -G abc -s /sbin/nologin abc
