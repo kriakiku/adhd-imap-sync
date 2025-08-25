@@ -1,6 +1,9 @@
 #!/usr/bin/with-contenv sh
 set -e
 
+: "${PUID:=1000}"
+: "${PGID:=1000}"
+
 if [ ! -f /root/.netrc ]; then
     if [ -f /config/.netrc ]; then
         echo "Creating symlink: /root/.netrc -> /config/.netrc"
@@ -9,6 +12,9 @@ if [ ! -f /root/.netrc ]; then
         echo "No /config/.netrc found. Creating empty /root/.netrc"
         touch /root/.netrc
     fi
+
+    chmod 600 /root/.netrc || true
+    chown "$PUID:$PGID" /run/config/fetchmailrc || true
 else
     echo "/root/.netrc already exists. Nothing to do."
 fi

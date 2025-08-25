@@ -63,10 +63,6 @@ if [ -z "${suffixes# }" ]; then
   exit 1
 fi
 
-# --- Prepare runtime config dir ---
-mkdir -p /run/config
-chown "$PUID:$PGID" /run/config
-
 # --- Defaults ---
 : "${ADHD_KEEP:=keep}"             # "keep" or "no keep"
 : "${ADHD_IMAP_PORT:=993}"
@@ -75,6 +71,10 @@ chown "$PUID:$PGID" /run/config
 : "${PGID:=1000}"
 # Delivery uses a single full-URI variable ADHD_DELIVERY_TARGET[_SUF], e.g.:
 # lmtp://127.0.0.1:24, lmtp:/var/run/dovecot/lmtp, smtp://postfix:25
+
+# --- Prepare runtime config dir ---
+mkdir -p /run/config
+chown "$PUID:$PGID" /run/config
 
 # --- Build fetchmailrc ---
 {
