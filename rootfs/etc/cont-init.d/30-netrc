@@ -13,7 +13,7 @@ if [ ! -f /root/.netrc ]; then
         touch /root/.netrc
     fi
 
-    chmod 600 /root/.netrc || true
+    chmod 644 /root/.netrc || true
     chown "$PUID:$PGID" /root/.netrc || true
 else
     echo "/root/.netrc already exists. Nothing to do."
