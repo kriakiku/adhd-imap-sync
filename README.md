@@ -146,14 +146,7 @@ So, I turned to **Fetchmail** — but here’s the catch: it doesn’t support *
 
 That’s when I found **GoIMAPNotify**, which *does* support IMAP IDLE and can trigger commands when new mail arrives. Perfect match! So I built a **Docker image** that automatically generates configs for both tools and makes them work together.  
 
-Maybe someone else finds this handy too. 🙂  
-
-
----
-
-## 🧠 Why “ADHD”?
-
-Because I’m like a caffeinated squirrel when it comes to new emails — I want them now! 🐿️📬⚡
+Maybe someone else finds this handy too. 🙂
 
 
 ---
