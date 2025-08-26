@@ -67,10 +67,12 @@ fi
 : "${ADHD_KEEP:=keep}"             # "keep" or "no keep"
 : "${ADHD_IMAP_PORT:=993}"
 : "${ADHD_IMAP_TLS:=true}"         # true/false
+: "${PUID:=1000}"
+: "${PGID:=1000}"
 
 # --- Prepare runtime config dir ---
 mkdir -p /run/config
-chown abc:abc /run/config
+chown "$PUID:$PGID" /run/config
 
 # --- Build fetchmailrc ---
 {
@@ -118,7 +120,7 @@ chown abc:abc /run/config
 } > /run/config/fetchmailrc
 
 chmod 600 /run/config/fetchmailrc || true
-chown abc:abc /run/config/fetchmailrc || true
+chown "$PUID:$PGID" /run/config/fetchmailrc || true
 
 # --- Build goimapnotify.yml ---
 {
@@ -149,4 +151,4 @@ EOF
   done
 } > /run/config/goimapnotify.yml
 
-chown abc:abc /run/config/goimapnotify.yml || true
+chown "$PUID:$PGID" /run/config/goimapnotify.yml || true
