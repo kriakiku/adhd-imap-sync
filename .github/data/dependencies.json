@@ -1,12 +1,12 @@
 {
   "project": {
-    "version": "1.1.0"
+    "version": "1.1.1"
   },
   "goimapnotify": {
     "version": "2.5.3"
   },
   "fetchmail": {
-    "version": "6.5.4",
-    "download": "https://sourceforge.net/projects/fetchmail/files/branch_6.5/fetchmail-6.5.4.tar.xz/download"
+    "version": "6.5.5",
+    "download": "https://sourceforge.net/projects/fetchmail/files/branch_6.5/fetchmail-6.5.5.tar.xz/download"
   }
 }
