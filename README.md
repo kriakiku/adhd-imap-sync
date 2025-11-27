@@ -30,7 +30,8 @@ Example `compose.yml`:
 ```yaml
 services:
   adhd-imap-sync:
-    image: ghcr.io/kriakiku/adhd-imap-sync:latest
+    # ⚠️ Please use version 1.1.1 — the latest versions are broken, and I haven’t had time to fix them yet.
+    image: ghcr.io/kriakiku/adhd-imap-sync:1.1.1
     container_name: adhd-imap-sync
     restart: unless-stopped
     secrets:
